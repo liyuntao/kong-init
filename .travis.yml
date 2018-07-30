@@ -15,7 +15,7 @@ env:
     # Used as conditional check in the install stage
     - HOST=x86_64-apple-darwin
     # Used on the deployment script
-    - PROJECT_NAME=kong_init
+    - PROJECT_NAME=kong-init
 
 script:
   - cargo build --target $TARGET --verbose
@@ -42,8 +42,6 @@ deploy:
   on:
     # deploy only if we push a tag
     tags: true
-    # deploy only on stable channel that has TARGET env variable sets
-    condition: $TRAVIS_RUST_VERSION = stable && $TARGET != ""
 
 notifications:
   email:

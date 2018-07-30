@@ -75,6 +75,6 @@ routes:
 ## run the command
 
 ```bash
-export RUST_LOG=kong_init=info
-kong_init --path ./example/kong11.yaml --url http://localhost:8001
+export RUST_LOG=kong-init=info
+kong-init --path ./example/kong11.yaml --url http://localhost:8001
 ```
