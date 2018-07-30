@@ -45,7 +45,7 @@ plugins:
 
 ## Service/Route style defination
 
-Declare API style configurations in a yaml file. Suit for kong version >= 0.13
+Declare Service/Route style configurations in a yaml file. Suit for kong version >= 0.13
 ```yaml
 services:
   - name: netdisk
