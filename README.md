@@ -12,7 +12,7 @@ kong-init is a tool for [Kong](https://getkong.org/) to allow automatic declarat
 * support api-defination & service/route defination
 * support cloud environment (docker)
 
-## requirment
+## requirement
 
 * run on linux: openssl v1.1 (due to dependency link reqwest -> rust-native-tls -> openssl 1.1)
 * run on mac/windows: no extra dependency
@@ -21,7 +21,7 @@ kong-init is a tool for [Kong](https://getkong.org/) to allow automatic declarat
 
 # Getting started
 
-more detail explanation under `example` folder.
+more detailed explanation can be found under `example` folder.
 
 ## API style defination
 
