@@ -80,3 +80,51 @@ routes:
 
 kong-init --path ./example/kong11.yaml --url http://localhost:8001
 ```
+
+## advanced usage
+
+Env var replacing:
+one can define any environment var using `${env_name}` in yaml file.
+```yaml
+apis:
+  - name: cookie-api
+    uris: /api/v1/cookie
+    methods: GET,POST,HEAD,PUT
+    upstream_url: http://service01:${my_port}/api/v1/cookie
+```
+
+Useful built-in instructions:
+
+1）k-upsert-consumer
+* scenario: In some scenarios, we want our api can support both request with or without jwt header(do not return 401 if without jwt). 
+So we must configure `config.anonymous`. However this field can only accepts an uuid with existing consumer, not so convenient for our initialization.
+We can use k-upsert-consumer directive to acheve this. It will replaced by a real uuid at runtime.
+* ability: using given `consumer_id` to fetch or create the uuid of consumer. (will fetch if consumer exists for idempotent initialization)
+* args: consumer_id 
+* usage: {{k-upsert-consumer:<custom_name_str>}}
+
+```yaml
+apis:
+  - name: cookie-api
+    uris: /api/v1/cookie
+    methods: GET,POST,HEAD,PUT
+    upstream_url: http://service01:8080/api/v1/cookie
+  - name: jar-api
+    uris: /api/v1/jar
+    upstream_url: http://service02:8080/api/v1/jar
+
+plugins:
+  - name: strict-jwt
+    plguin_type: jwt
+    target_api: cookie-api
+    config:
+      uri_param_names: jwt
+      secret_is_base64: false
+  - name: nonstrict-jwt
+    plguin_type: jwt
+    target_api: jar-api
+    config:
+      uri_param_names: jwt
+      secret_is_base64: false
+      anonymous: {{k-upsert-consumer:guest_user}}
+```
