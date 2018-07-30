@@ -75,6 +75,8 @@ routes:
 ## run the command
 
 ```bash
-export RUST_LOG=kong-init=info
+# download the latest binary file located in https://github.com/liyuntao/kong-init/releases
+# or build from source if you have rust installed: cargo build
+
 kong-init --path ./example/kong11.yaml --url http://localhost:8001
 ```

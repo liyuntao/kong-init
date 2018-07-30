@@ -40,7 +40,18 @@ mod client;
 mod entity;
 
 fn main() {
+
+    let logger_key = "RUST_LOG";
+    match env::var(logger_key) {
+        Ok(_val) => {},
+        Err(_e) => {
+            // make default loglevel == info
+            env::set_var(logger_key, "kong_init=info");
+        },
+    }
+
     pretty_env_logger::init();
+
     let matches = App::new("kong-init")
         .version("0.6.0")
         .about("")
