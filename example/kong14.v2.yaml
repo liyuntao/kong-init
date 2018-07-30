@@ -16,25 +16,25 @@ routes:
       paths: ["/dummy"]
       strip_path: true
   - name: r-dummy-no-auth
-    apply_to: dummy
+    apply_to: dummy # specify one services's name to apply
     config:
       paths: ["/dummy/login"]
       strip_path: true
 
 plugins:
-  - name: prometheus
+  - name: prometheus # in service/route style, plugins.name is the type of plugin(different than v1)
     enabled: true
-    target: global
+    target: global # apply current plugin to global
   - name: jwt
     enabled: false
-    target: r[r-dummy]
+    target: r[r-dummy] # apply current plugin to routes, seperated by comma
     config:
       uri_param_names: jwt
       secret_is_base64: false
       anonymous: {{k-upsert-consumer:guest_user}}
   - name: rate-limiting
     enabled: true
-    target: s[netdisk,dummy]
+    target: s[netdisk,dummy] # apply current plugin to services, seperated by comma
     config:
       second: 20
       minute: 100
