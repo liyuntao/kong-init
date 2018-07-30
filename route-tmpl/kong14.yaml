@@ -1,0 +1,42 @@
+services:
+  - name: netdisk
+    url: http://host.docker.internal:8090
+  - name: dummy
+    url: http://host.docker.internal:7090/dummy
+
+routes:
+  - name: r-netdisk
+    apply_to: netdisk
+    config:
+      paths: ["/api/v1/netdisk"]
+      strip_path: false
+  - name: r-dummy
+    apply_to: dummy
+    config:
+      paths: ["/dummy"]
+      strip_path: true
+  - name: r-dummy-no-auth
+    apply_to: dummy
+    config:
+      paths: ["/dummy/login"]
+      strip_path: true
+
+plugins:
+  - name: prometheus
+    enabled: true
+    target: global
+  - name: jwt
+    enabled: false
+    target: r[r-dummy]
+    config:
+      uri_param_names: jwt
+      secret_is_base64: false
+      anonymous: {{k-upsert-consumer:guest_user}}
+  - name: rate-limiting
+    enabled: true
+    target: s[netdisk,dummy]
+    config:
+      second: 20
+      minute: 100
+      hour: 1800
+      limit_by: consumer
