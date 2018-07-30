@@ -3,18 +3,21 @@ language: rust
 matrix:
   include:
     # Linux
-    - env: TARGET=x86_64-unknown-linux-gnu
+#    - env: TARGET=x86_64-unknown-linux-gnu
     # OSX
-    - env: TARGET=x86_64-apple-darwin
-      os: osx
+#    - env: TARGET=x86_64-apple-darwin
+#      os: osx
     # Windows
     - env: TARGET=x86_64-pc-windows-gnu
-
+      sudo: required
+      addons:
+        apt:
+          packages:
+            - gcc-mingw-w64
 addons:
   apt:
     packages:
       - libssl-dev
-      - gcc-mingw-w64
 
 env:
   global:
@@ -70,7 +73,7 @@ branches:
   only:
     # release tags
     - /^v\d+\.\d+\.\d+.*$/
-#    - master
+    - master
 
 notifications:
   email:
