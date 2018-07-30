@@ -1,0 +1,50 @@
+language: rust
+cache: cargo
+matrix:
+  include:
+#    - os: linux
+#      rust: stable
+#      env: TARGET=x86_64-unknown-linux-gnu
+    - os: osx
+      rust: stable
+      env: TARGET=x86_64-apple-darwin
+
+env:
+  global:
+    # Default target on travis-ci.
+    # Used as conditional check in the install stage
+    - HOST=x86_64-apple-darwin
+    # Used on the deployment script
+    - PROJECT_NAME=kong_init
+
+script:
+  - cargo build --target $TARGET --verbose
+
+deploy:
+  provider: releases
+  # NOTE updating the `api_key.secure`
+  # - go to: https://github.com/settings/tokens/new
+  # - generate new token using `public_repo` scope
+  # - encrypt it using: `travis encrypt API_KEY_HERE`
+  # - paste the output below
+  api_key:
+    secure: "NdpTB5qozA2l8bRuNZ9GY5dyCEYjU2GF4G2oy0xI4XuWHAlWx2mFG/ew8SQf0azrSU4Ke+6IWcokx4cBfXteu4VqBUvw23DX8tU6Mvr/hTcphOJZm0lBlHGKIrrq8LUebMmiJ6vyRzwThM6eTF/blnpJO/G/iLHcZ2//c7o4OuAinac8wZFblttErISsEiLdbZwNAO4bT20SJKHYIUZHlWguFs9dCFGmXjjRonfqlPWzsm5p8Hyxa+AspD9Ac4/mPbTFr1M92F4chWqzwSf+YuOHyNJuOlMV16V8LQmIQMOANSLTZ08qQS8+6vOJ96EsTe2Ggy1K5pn3yoZV8OO32Rnii861hP25Zs+EejqUHaht7vgNFrB6i320xW/eV9EQN9RlaPv6A/RJBFcg5xqBxCMK2BOLfkfeqewQ9kSFKOsq04Jqqnsb8NunwEt5BktwemP7CxiBohY4e4RAM6uaW2F2Lm6CFUGglSyehQUbUkyxy0C5W531OYH97sn/iqMvZuYYErwtyKwnFhNLcZ5ph0/x8YOhf2iWyPj1EH2onjgxSdhkbnBeDhBOdeOkCZWW7TT9bCRtlboDv2zeeUt6jP8Cb7eKrmmfFJnd7mUGnPsi1+GlmsspZxB9FOSC4Vzg/6Ew6Thj/pLPfrGfCrjIdzOh3MqbKLDM37FM9Q3RYu4="
+  # for uploading multiple files
+  file_glob: true
+  # NOTE explanation on each env variable
+  # - PROJECT_NAME: name of the project, set on the `env.global` above
+  # - TRAVIS_TAG: tag name that the build is being deployed for, usually the version number
+  # - TARGET: target triple of the build
+  file:
+    - $PROJECT_NAME-$TRAVIS_TAG-$TARGET.*
+  # don't delete artifacts from previous stage
+  skip_cleanup: true
+  on:
+    # deploy only if we push a tag
+    tags: true
+    # deploy only on stable channel that has TARGET env variable sets
+    condition: $TRAVIS_RUST_VERSION = stable && $TARGET != ""
+
+notifications:
+  email:
+    on_success: never
