@@ -19,7 +19,7 @@ main() {
 
     cargo build --target $TARGET --release
 
-    cp target/$TARGET/release/$CRATE_NAME $stage/
+    cp target/$TARGET/release/$CRATE_NAME* $stage/
 
     cd $stage
     tar czf $src/$CRATE_NAME-$TRAVIS_TAG-$TARGET.tar.gz *
