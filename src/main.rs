@@ -54,7 +54,7 @@ fn main() {
             .long("url")
             .takes_value(true)
             .help("admin url of kong-server"))
-        .arg(Arg::with_name("")
+        .arg(Arg::with_name("wait")
             .long("wait")
             .short("w")
             .help("wait until kong-server is ready(suit for init under cloud environment)"))
@@ -65,7 +65,9 @@ fn main() {
     info!("Start serving KongInit...");
     info!("Connecting to Kong on {} using {}", admin_url, tmpl_path);
 
-    if let Err(e) = runc(tmpl_path, admin_url, false) {
+    let is_wait = matches.is_present("wait");
+
+    if let Err(e) = runc(tmpl_path, admin_url, is_wait) {
 //        error!("unable to init kong: {}", e);
         std::process::exit(1)
     }
@@ -101,11 +103,17 @@ fn runc(tmpl_path: &str, admin_url: &str, is_wait: bool) -> Result<(), Error> {
 
     if is_wait {
         let mut is_connected = false;
+        let retry_interval_ms = 5000;
         while !is_connected {
             is_connected = verify_kong_version(&mut context);
+            info!("retry in {}ms", retry_interval_ms);
+            sleep(Duration::from_millis(retry_interval_ms));
         }
     } else {
-        verify_kong_version(&mut context);
+        let is_connected = verify_kong_version(&mut context);
+        if !is_connected {
+            std::process::exit(1);
+        }
     }
 
     let deserialized_conf = parse_template(tmpl_path, &context);
@@ -132,12 +140,9 @@ fn runc(tmpl_path: &str, admin_url: &str, is_wait: bool) -> Result<(), Error> {
 
 fn verify_kong_version(context: &mut ExecutionContext) -> bool {
     let cli = &context.kong_cli;
-    let retry_interval_ms = 5000;
     return match cli.get_node_info() {
         Err(why) => {
             error!("Could not reach Kong on {}; reason: {}", cli.base_url, why);
-            error!("retry in {}ms", retry_interval_ms);
-            sleep(Duration::from_millis(retry_interval_ms));
             false
         }
         Ok(kong_info) => {
