@@ -35,7 +35,7 @@ apis:
 
 plugins:
   - name: jwt
-    plguin_type: jwt
+    plugin_type: jwt
     target_api: cookie-api
     config:
       uri_param_names: jwt
@@ -115,13 +115,13 @@ apis:
 
 plugins:
   - name: strict-jwt
-    plguin_type: jwt
+    plugin_type: jwt
     target_api: cookie-api
     config:
       uri_param_names: jwt
       secret_is_base64: false
   - name: nonstrict-jwt
-    plguin_type: jwt
+    plugin_type: jwt
     target_api: jar-api
     config:
       uri_param_names: jwt

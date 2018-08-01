@@ -27,7 +27,7 @@ pub struct RouteInfo {
 #[derive(Debug, Deserialize, PartialEq)]
 pub struct LegacyPluginInfo {
     pub name: String,
-    pub plguin_type: String,
+    pub plugin_type: String,
     pub target_api: String,
     pub config: BTreeMap<String, String>,
 }

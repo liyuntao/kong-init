@@ -10,19 +10,19 @@ apis:
 
 plugins:
   - name: jwt-conf-01 # your custom name, basiclly for description.
-    plguin_type: jwt
+    plugin_type: jwt
     target_api: cookie-api,jar-api
     config:
       uri_param_names: jwt
       secret_is_base64: false
   - name: jwt-conf-02
-    plguin_type: jwt
+    plugin_type: jwt
     target_api: none
     config: # fields under config is entirety same as form params under specified plugin refrence in official site.
       uri_param_names: jwt
       secret_is_base64: true
   - name: ratelimiting-conf-01
-    plguin_type: rate-limiting
+    plugin_type: rate-limiting
     target_api: all # target_api canbe one of all/none/<api-name-1>,<api-name-2> separate by comma
     config:
       second: 20

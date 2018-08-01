@@ -273,7 +273,7 @@ fn init_apis(context: &mut ExecutionContext, apis: &[ApiInfo]) {
 fn apply_plugins_to_api(context: &ExecutionContext, plugins: &[LegacyPluginInfo]) {
     for plugin_info in plugins {
         debug!("{:?}", plugin_info);
-        let plugin_type = &plugin_info.plguin_type;
+        let plugin_type = &plugin_info.plugin_type;
         let plugin_conf = &plugin_info.config;
 
         let target_apis: (LegacyPluginAppliedType, Option<Vec<String>>) =
