@@ -10,6 +10,7 @@ kong-init is a tool for [Kong](https://getkong.org/) to allow automatic declarat
 * declarative configuration(using yaml)
 * support kong 0.11.X ~ 0.14.X (currently not tested under version <= 0.10.X)
 * support api-defination & service/route defination
+* support consumer initialization
 * support cloud environment (docker)
 
 ## requirement
