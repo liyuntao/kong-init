@@ -17,14 +17,14 @@ use clap::{App, Arg};
 use client::KongApiClient;
 use entity::{ApiInfo,
              ConfFileStyle,
+             ConsumerInfo,
              KongConf,
              LegacyKongConf,
-             LegacyPluginInfo,
              LegacyPluginAppliedType,
+             LegacyPluginInfo,
              PluginInfo,
-             RouteInfo,
              PluginTarget,
-             ServiceInfo};
+             RouteInfo, ServiceInfo};
 use regex::Regex;
 use semver::Version;
 use serde_yaml::Error;
@@ -40,14 +40,13 @@ mod client;
 mod entity;
 
 fn main() {
-
     let logger_key = "RUST_LOG";
     match env::var(logger_key) {
-        Ok(_val) => {},
+        Ok(_val) => {}
         Err(_e) => {
             // make default loglevel == info
             env::set_var(logger_key, "kong_init=info");
-        },
+        }
     }
 
     pretty_env_logger::init();
@@ -131,11 +130,13 @@ fn runc(tmpl_path: &str, admin_url: &str, is_wait: bool) -> Result<(), Error> {
 
     match deserialized_conf {
         ConfFileStyle::Legacy(legacy_conf) => {
+            init_consumers(&context, &legacy_conf.consumers);
             init_apis(&mut context, &legacy_conf.apis);
             apply_plugins_to_api(&context, &legacy_conf.plugins);
         }
         ConfFileStyle::Suggested(suggested_conf) => {
             clear_before_init(&context);
+            init_consumers(&context, &suggested_conf.consumers);
             init_services(&mut context, &suggested_conf.services);
             init_routes(&mut context, suggested_conf.routes);
             apply_plugins_to_service_route(&context, &suggested_conf.plugins)
@@ -173,7 +174,7 @@ fn verify_kong_version(context: &mut ExecutionContext) -> bool {
             }
             true
         }
-    }
+    };
 }
 
 fn parse_template(tmpl_file_path: &str, context: &ExecutionContext) -> ConfFileStyle {
@@ -256,6 +257,15 @@ fn _replace_env(input: &str) -> String {
         output = output.replace(&format!("${{{}}}", k), v);
     }
     return output;
+}
+
+fn init_consumers(context: &ExecutionContext, consumers: &[ConsumerInfo]) {
+    for consumer_info in consumers {
+        debug!("consumer_info {:?}", consumer_info);
+        context.kong_cli.add_consumer(&consumer_info);
+    }
+    info!("finished loading Consumers...");
+    info!("=================================");
 }
 
 fn init_apis(context: &mut ExecutionContext, apis: &[ApiInfo]) {

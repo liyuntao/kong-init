@@ -29,3 +29,9 @@ plugins:
       minute: 100
       hour: 1800
       limit_by: consumer
+
+consumers:
+  - username: guest-user
+    custom_id: anonymous-user # optional
+  - username: admin
+    custom_id: admin

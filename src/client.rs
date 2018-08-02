@@ -3,7 +3,7 @@ extern crate reqwest;
 use entity::{AddRouteResp,
              AddServiceResp,
              ApiInfo,
-             ConsumerInfo,
+             ConsumerDO,
              KongInfo,
              LegacyPluginAppliedType,
              ListApiResp,
@@ -230,15 +230,35 @@ impl<'t> KongApiClient<'t> {
             Ok(mut resp) => {
                 return if resp.status() == StatusCode::Created {
                     info!("upsert_consumer: custom_id={} has created!", custom_id);
-                    resp.json::<ConsumerInfo>().unwrap().id
+                    resp.json::<ConsumerDO>().unwrap().id
                 } else if resp.status() == StatusCode::Conflict {
                     self.client.get(&format!("{}/consumers/{}", self.base_url, custom_id))
                         .send()
-                        .and_then(|mut res| res.json::<ConsumerInfo>())
+                        .and_then(|mut res| res.json::<ConsumerDO>())
                         .map(|c_info| c_info.id).unwrap()
                 } else {
                     info!("upsert_consumer: unexpected status returned {}", resp.status());
                     String::from("error_id")
+                };
+            }
+        };
+    }
+
+    pub fn add_consumer(&self, payload: &BTreeMap<String, String>) {
+        let username = payload.get("username").unwrap();
+        return match self.client.post(&format!("{}/consumers", self.base_url))
+            .json(&payload)
+            .send() {
+            Err(why) => {
+                error!("upsert_consumer: {}", why);
+            }
+            Ok(resp) => {
+                return if resp.status() == StatusCode::Created {
+                    info!("upsert_consumer: username={} has created!", username);
+                } else if resp.status() == StatusCode::Conflict {
+                    info!("upsert_consumer: username={} has existed! skip..", username);
+                } else {
+                    error!("upsert_consumer: unexpected status returned {}", resp.status());
                 };
             }
         };

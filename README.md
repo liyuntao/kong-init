@@ -84,7 +84,7 @@ kong-init --path ./example/kong11.yaml --url http://localhost:8001
 ## advanced usage
 
 Env var replacing:
-one can define any environment var using `${env_name}` in yaml file.
+one can define any environment var using `${env_name}` in yaml file. The env var will be replaced by it's value at runtime.
 ```yaml
 apis:
   - name: cookie-api
