@@ -52,7 +52,7 @@ fn main() {
     pretty_env_logger::init();
 
     let matches = App::new("kong-init")
-        .version("0.7.1")
+        .version("0.8.0")
         .about("")
         .arg(Arg::with_name("path")
             .required(true)
@@ -130,6 +130,7 @@ fn runc(tmpl_path: &str, admin_url: &str, is_wait: bool) -> Result<(), Error> {
 
     match deserialized_conf {
         ConfFileStyle::Legacy(legacy_conf) => {
+            clear_before_init_legacy(&context);
             init_consumers(&context, &legacy_conf.consumers);
             init_apis(&mut context, &legacy_conf.apis);
             apply_plugins_to_api(&context, &legacy_conf.plugins);
@@ -212,7 +213,7 @@ fn replace_env_and_directive(input: &str, context: &ExecutionContext) -> String 
 }
 
 fn _replace_directive(input: &str, context: &ExecutionContext) -> String {
-    let dd_re = Regex::new(r"\{\{(.+?)\}\}").unwrap();
+    let dd_re = Regex::new(r"\{\{(.+?)}}").unwrap();
 
     let mut shit = HashMap::new();
 
@@ -237,7 +238,7 @@ fn _replace_directive(input: &str, context: &ExecutionContext) -> String {
 }
 
 fn _replace_env(input: &str) -> String {
-    let env_re = Regex::new(r"\$\{(.+?)\}").unwrap();
+    let env_re = Regex::new(r"\$\{(.+?)}").unwrap();
 
     let mut tmp = HashMap::new();
 
@@ -299,8 +300,14 @@ fn apply_plugins_to_api(context: &ExecutionContext, plugins: &[LegacyPluginInfo]
     info!("=================================");
 }
 
+fn clear_before_init_legacy(context: &ExecutionContext) {
+    info!("clear_before_init");
+    context.kong_cli.delete_all_plugins();
+}
+
 fn clear_before_init(context: &ExecutionContext) {
     info!("clear_before_init");
+    context.kong_cli.delete_all_plugins();
     context.kong_cli.delete_all_routes();
     context.kong_cli.delete_all_services();
 }
@@ -328,8 +335,8 @@ fn init_routes(context: &mut ExecutionContext, routes: Vec<RouteInfo>) {
 }
 
 fn apply_plugins_to_service_route(context: &ExecutionContext, plugins: &[PluginInfo]) {
-    let service_re = Regex::new(r"^s\[[-0-9a-zA-Z,]+\]$").unwrap();
-    let route_re = Regex::new(r"^r\[[-0-9a-zA-Z,]+\]$").unwrap();
+    let service_re = Regex::new(r"^s\[[-0-9a-zA-Z,]+]$").unwrap();
+    let route_re = Regex::new(r"^r\[[-0-9a-zA-Z,]+]$").unwrap();
 
     for plugin_info in plugins {
         debug!("pluinInfo {:?}", plugin_info);

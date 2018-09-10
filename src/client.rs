@@ -10,6 +10,7 @@ use entity::{AddRouteResp,
              PluginInfo,
              PluginTarget,
              RouteInfo,
+             PluginList,
              RouteList,
              ServiceInfo,
              ServiceList};
@@ -147,6 +148,39 @@ impl<'t> KongApiClient<'t> {
             }
         }
     }
+    /*********** routes end ****************/
+
+    /*********** plugins ****************/
+    pub fn list_plugins(&self) -> Result<PluginList, reqwest::Error> {
+        return self.client.get(&format!("{}/plugins", self.base_url))
+            .send()
+            .and_then(|mut res| res.json::<PluginList>());
+    }
+
+    pub fn delete_all_plugins(&self) {
+        let plugin_list = self.list_plugins().unwrap();
+
+        plugin_list.data.iter().for_each(|plugin_item| {
+            self.delete_plugin_by_id(&plugin_item.id);
+        });
+    }
+
+    pub fn delete_plugin_by_id(&self, plugin_id: &str) {
+        match self.client.delete(&format!("{}/plugins/{}", self.base_url, plugin_id))
+            .send() {
+            Err(why) => error!("delete_plugin_by_id: {} using id={}", why, plugin_id),
+            Ok(resp) => {
+                if resp.status() == StatusCode::NoContent {
+                    info!("plugin {} has removed!", plugin_id)
+                } else if resp.status() == StatusCode::NotFound {
+                    debug!("plugin {} not found, skip!", plugin_id)
+                } else {
+                    error!("delete_plugin_by_id: {} using id={}", resp.status(), plugin_id)
+                }
+            }
+        }
+    }
+    /*********** plugins end ****************/
 
     pub fn add_route_to_service(&self, service_id: String, mut route_info: RouteInfo) -> Option<String> {
         let route_cfg = &mut route_info.config;

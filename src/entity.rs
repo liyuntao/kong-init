@@ -91,6 +91,12 @@ pub struct RouteList {
 }
 
 #[derive(Debug, Deserialize)]
+pub struct PluginList {
+    pub total: i32,
+    pub data: Vec<PluginItem>,
+}
+
+#[derive(Debug, Deserialize)]
 pub struct ServiceItem {
     pub id: String,
     pub name: String,
@@ -99,6 +105,12 @@ pub struct ServiceItem {
 #[derive(Debug, Deserialize)]
 pub struct RouteItem {
     pub id: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct PluginItem {
+    pub id: String,
+    pub name: String,
 }
 
 pub enum LegacyPluginAppliedType {
