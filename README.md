@@ -84,7 +84,16 @@ kong-init --path ./example/kong11.yaml --url http://localhost:8001
 
 ## advanced usage
 
-Env var replacing:
+#### debug mode
+
+kong-init use `env_logger` for logging, which is a simple logger can be configured via environment variables.
+```bash
+# set log_level to debug
+RUST_LOG=kong_init=debug kong-init --path ./example/kong11.yaml --url http://localhost:8001
+```
+
+#### env var replacing:
+
 one can define any environment var using `${env_name}` in yaml file. The env var will be replaced by it's value at runtime.
 ```yaml
 apis:
@@ -94,9 +103,15 @@ apis:
     upstream_url: http://service01:${my_port}/api/v1/cookie
 ```
 
-Useful built-in instructions:
+```bash
+# env var replacing example
+my_port=8081 kong-init --path ./example/kong11.yaml --url http://localhost:8001
+```
 
-1）k-upsert-consumer
+
+#### useful built-in instructions:
+
+##### 1）k-upsert-consumer
 * scenario: In some scenarios, we want our api can support both request with or without jwt header(do not return 401 if without jwt). 
 So we must configure `config.anonymous`. However this field can only accepts an uuid with existing consumer, not so convenient for our initialization.
 We can use k-upsert-consumer directive to acheve this. It will replaced by a real uuid at runtime.
@@ -115,13 +130,13 @@ apis:
     upstream_url: http://service02:8080/api/v1/jar
 
 plugins:
-  - name: strict-jwt
+  - name: strict-jwt # will return 401 if request without token
     plugin_type: jwt
     target_api: cookie-api
     config:
       uri_param_names: jwt
       secret_is_base64: false
-  - name: nonstrict-jwt
+  - name: nonstrict-jwt # will fallback to specified user/consumer if request without token
     plugin_type: jwt
     target_api: jar-api
     config:

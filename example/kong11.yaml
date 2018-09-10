@@ -23,7 +23,7 @@ plugins:
       secret_is_base64: true
   - name: ratelimiting-conf-01
     plugin_type: rate-limiting
-    target_api: all # target_api canbe one of all/none/<api-name-1>,<api-name-2> separate by comma
+    target_api: all # target_api can be one of all/none/<api-name-1>,<api-name-2> separate by comma
     config:
       second: 20
       minute: 100
