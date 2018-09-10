@@ -308,7 +308,7 @@ dependencies = [
 
 [[package]]
 name = "kong-init"
-version = "0.7.0"
+version = "0.7.1"
 dependencies = [
  "clap 2.32.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.4.3 (registry+https://github.com/rust-lang/crates.io-index)",

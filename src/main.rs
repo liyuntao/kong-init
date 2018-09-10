@@ -44,7 +44,7 @@ fn main() {
     match env::var(logger_key) {
         Ok(_val) => {}
         Err(_e) => {
-            // make default loglevel == info
+            // make default log_level == info
             env::set_var(logger_key, "kong_init=info");
         }
     }
@@ -52,7 +52,7 @@ fn main() {
     pretty_env_logger::init();
 
     let matches = App::new("kong-init")
-        .version("0.6.0")
+        .version("0.7.1")
         .about("")
         .arg(Arg::with_name("path")
             .required(true)
