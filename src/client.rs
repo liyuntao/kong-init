@@ -239,7 +239,7 @@ impl<'t> KongApiClient<'t> {
                 if resp.status() == StatusCode::NoContent {
                     info!("API {} has removed!", api_name)
                 } else if resp.status() == StatusCode::NotFound {
-                    debug!(" API {} not found, skip!", api_name)
+                    debug!("API {} not found, skip!", api_name)
                 } else {
                     warn!("delete_api: {}", resp.status())
                 }
@@ -252,11 +252,11 @@ impl<'t> KongApiClient<'t> {
             .json(payload)
             .send() {
             Err(why) => error!("upsert_api: {}", why),
-            Ok(resp) => {
+            Ok(mut resp) => {
                 if resp.status() == StatusCode::Created {
-                    info!(" API {} has created/updated!", api_name)
+                    info!("API {} has created/updated!", api_name)
                 } else {
-                    warn!("upsert_api: {}", resp.status())
+                    warn!("upsert_api: {} {}", resp.status(), resp.text().unwrap())
                 }
             }
         }

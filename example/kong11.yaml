@@ -6,7 +6,7 @@ apis:
   - name: jar-api
     uris: /api/v1/jar
     upstream_url: http://service02:8080
-    strip_url: false
+    strip_uri: false
 
 plugins:
   - name: jwt-conf-01 # your custom name, basiclly for description.
