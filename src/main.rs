@@ -52,7 +52,7 @@ fn main() {
     pretty_env_logger::init();
 
     let matches = App::new("kong-init")
-        .version("0.8.0")
+        .version("0.8.0-beta-1")
         .about("")
         .arg(Arg::with_name("path")
             .required(true)
