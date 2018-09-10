@@ -1,6 +1,6 @@
 [package]
 name = "kong-init"
-version = "0.8.0-beta-2"
+version = "0.8.0-beta-3"
 keywords = ["kong", "api-gateway", "client"]
 authors = ["liyuntao <liyuntao58607@163.com>"]
 
