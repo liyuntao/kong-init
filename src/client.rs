@@ -151,18 +151,32 @@ impl<'t> KongApiClient<'t> {
     /*********** routes end ****************/
 
     /*********** plugins ****************/
-    pub fn list_plugins(&self) -> Result<PluginList, reqwest::Error> {
-        return self.client.get(&format!("{}/plugins", self.base_url))
+    pub fn list_plugins(&self, offset: Option<String>) -> Result<PluginList, reqwest::Error> {
+        let list_plugins_url = match offset {
+            None => format!("{}/plugins", self.base_url),
+            Some(offset) => format!("{}/plugins?offset={}", self.base_url, offset)
+        };
+
+        return self.client.get(&list_plugins_url)
             .send()
             .and_then(|mut res| res.json::<PluginList>());
     }
 
     pub fn delete_all_plugins(&self) {
-        let plugin_list = self.list_plugins().unwrap();
+        self._delete_plugins_batch(None);
+    }
+
+    pub fn _delete_plugins_batch(&self, next_offset: Option<String>) {
+        let plugin_list = self.list_plugins(next_offset).unwrap();
 
         plugin_list.data.iter().for_each(|plugin_item| {
             self.delete_plugin_by_id(&plugin_item.id);
         });
+
+        match plugin_list.offset {
+            None => {}
+            Some(next) => self._delete_plugins_batch(Some(next))
+        }
     }
 
     pub fn delete_plugin_by_id(&self, plugin_id: &str) {

@@ -94,6 +94,7 @@ pub struct RouteList {
 pub struct PluginList {
     pub total: i32,
     pub data: Vec<PluginItem>,
+    pub offset: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
