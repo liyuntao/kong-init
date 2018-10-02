@@ -161,16 +161,41 @@ fn verify_kong_version(context: &mut ExecutionContext) -> bool {
         Ok(kong_info) => {
             let kong_ver = &kong_info.version;
             info!("Kong version is {}", &kong_ver);
-            if Version::parse(kong_ver) < Version::parse("0.13.0") {
+
+            let mapped_semver_ce_ver = if kong_ver.ends_with("enterprise-edition") {
+                // 0.30 EE -> 0.12.1 CE
+                // 0.31 EE -> 0.12.3 CE
+                // 0.32 EE -> 0.13.1 CE
+                // 0.33 EE -> 0.13.1 CE
+                // https://docs.konghq.com/enterprise/changelog/#0-33-1
+                let ee_ver = &kong_ver[0..4];
+                let ce_ver = if "0.30" == ee_ver {
+                    "0.12.1"
+                } else if "0.31" == ee_ver {
+                    "0.12.3"
+                } else if "0.32" == ee_ver {
+                    "0.13.1"
+                } else if "0.33" == ee_ver {
+                    "0.13.1"
+                } else {
+                    "0.13.1" // FIXME
+                };
+                info!("detected EE version, regarded as the relevant CE version: {}", &ce_ver);
+                ce_ver
+            } else {
+                kong_ver
+            };
+
+            if Version::parse(mapped_semver_ce_ver) < Version::parse("0.13.0") {
                 // kong under 0.13.X do not support service/route
                 context.support_api = true;
-            } else if Version::parse(kong_ver) < Version::parse("0.15.0") {
+            } else if Version::parse(mapped_semver_ce_ver) < Version::parse("0.15.0") {
                 // kong within 0.13.X and 0.14.X
                 context.support_api = true;
                 context.support_service_route = true;
             } else {
                 // version >= 0.15.X, currently not supported.
-                error!("kong version >= 0.15.X, currently not supported.");
+                error!("kong version {}, currently not supported.", &kong_ver);
                 std::process::exit(1);
             }
             true
