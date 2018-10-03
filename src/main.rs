@@ -1,10 +1,12 @@
 #![allow(dead_code)]
 
 extern crate clap;
+extern crate http;
 #[macro_use]
 extern crate log;
 extern crate pretty_env_logger;
 extern crate regex;
+extern crate reqwest;
 extern crate semver;
 extern crate serde;
 #[macro_use]
@@ -64,6 +66,11 @@ fn main() {
             .long("url")
             .takes_value(true)
             .help("admin url of kong-server"))
+        .arg(Arg::with_name("header")
+            .long("header")
+            .multiple(true)
+            .takes_value(true)
+            .help("add custom header for kong-admin-api request(e.g. basic auth)"))
         .arg(Arg::with_name("wait")
             .long("wait")
             .short("w")
@@ -72,19 +79,21 @@ fn main() {
 
     let tmpl_path = matches.value_of("path").unwrap();
     let admin_url = matches.value_of("admin-url").unwrap();
+
+    let custom_headers_opt: Option<Vec<&str>> = matches.values_of("header").map(|values| values.collect());
     info!("Start serving KongInit...");
     info!("Connecting to Kong on {} using {}", admin_url, tmpl_path);
 
     let is_wait = matches.is_present("wait");
 
-    if let Err(e) = runc(tmpl_path, admin_url, is_wait) {
-//        error!("unable to init kong: {}", e);
+    if let Err(_e) = runc(tmpl_path, admin_url, custom_headers_opt, is_wait) {
+//        error!("unable to init kong: {}", _e);
         std::process::exit(1)
     }
 }
 
-struct ExecutionContext<'a> {
-    kong_cli: Box<KongApiClient<'a>>,
+struct ExecutionContext<'t> {
+    kong_cli: Box<KongApiClient<'t>>,
     support_api: bool,
     support_service_route: bool,
     // legacy mode
@@ -94,9 +103,9 @@ struct ExecutionContext<'a> {
     route_name_id_mapping: HashMap<String, String>,
 }
 
-impl<'a> ExecutionContext<'a> {
-    pub fn new(admin_url: &str) -> ExecutionContext {
-        let kong_cli = KongApiClient::build_with_url(admin_url);
+impl<'t> ExecutionContext<'t> {
+    pub fn new(admin_url: &'t str, custom_headers_opt: Option<Vec<&'t str>>) -> ExecutionContext<'t> {
+        let kong_cli = KongApiClient::build_with_url_header(admin_url, custom_headers_opt);
         return ExecutionContext {
             api_names: Vec::new(),
             kong_cli: Box::new(kong_cli),
@@ -108,8 +117,8 @@ impl<'a> ExecutionContext<'a> {
     }
 }
 
-fn runc(tmpl_path: &str, admin_url: &str, is_wait: bool) -> Result<(), Error> {
-    let mut context = ExecutionContext::new(admin_url);
+fn runc(tmpl_path: &str, admin_url: &str, custom_headers_opt: Option<Vec<&str>>, is_wait: bool) -> Result<(), Error> {
+    let mut context = ExecutionContext::new(admin_url, custom_headers_opt);
 
     if is_wait {
         let mut is_connected = false;
