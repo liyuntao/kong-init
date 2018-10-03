@@ -83,6 +83,23 @@ routes:
 kong-init --path ./example/kong11.yaml --url http://localhost:8001
 ```
 
+## Command-line options
+
+```
+USAGE:
+    kong-init [FLAGS] [OPTIONS] --url <admin-url> --path <path>
+
+FLAGS:
+    -h, --help       Prints help information
+    -V, --version    Prints version information
+    -w, --wait       wait until kong-server is ready(suit for init under cloud environment)
+
+OPTIONS:
+        --url <admin-url>       admin url of kong-server(e.g. http://kong_ip:8001)
+        --header <header>...    add custom header for admin-api request
+    -p, --path <path>           path to route defination file
+```
+
 ## advanced usage
 
 #### debug mode
