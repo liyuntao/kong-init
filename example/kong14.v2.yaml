@@ -46,3 +46,11 @@ consumers:
     custom_id: anonymous-user # optional
   - username: admin
     custom_id: admin
+
+credentials:
+  - name: jwt
+    target: admin
+    config:
+      id: "bcbfb45d-e391-42bf-c2ed-94e32946753a",
+      key: "a36c3049b36249a3c9f8891cb127243c",
+      secret: ${ADMIN_JWT_SECRET} # you can replace secrets with ENV_VARs
