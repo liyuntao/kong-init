@@ -12,6 +12,7 @@ kong-init is a tool for [Kong](https://getkong.org/) to allow automatic declarat
 * support kong EE 0.30 ~ 0.33
 * support api-definition & service/route definition
 * support consumer initialization
+* support credentials initialization (jwt/oauth/acls)
 * support cloud environment (docker)
 
 ## requirement
