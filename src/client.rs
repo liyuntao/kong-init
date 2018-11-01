@@ -27,8 +27,8 @@ pub struct KongApiClient<'t> {
 }
 
 impl<'t> KongApiClient<'t> {
-    pub fn build_with_url_header(kong_admin_url: &'t str, custom_header_opt: Option<Vec<&'t str>>) -> KongApiClient<'t> {
-        let client = match custom_header_opt {
+    pub fn build_with_url_header(kong_admin_url: &'t str, custom_headers_opt: Option<Vec<&'t str>>) -> KongApiClient<'t> {
+        let client = match custom_headers_opt {
             None => Client::new(),
             Some(header_strs) => {
                 let mut headers = HeaderMap::new();
@@ -36,8 +36,11 @@ impl<'t> KongApiClient<'t> {
                     if !raw_header.contains(":") {
                         warn!("invalid header value: {} has ignored!", raw_header)
                     } else {
-                        let mut sp = raw_header.split(":");
-                        headers.insert(HeaderName::from_str(sp.nth(0).unwrap()).unwrap(), HeaderValue::from_str(sp.nth(1).unwrap().trim()).unwrap());
+                        let sp: Vec<&str> = raw_header.split(':').collect();
+                        debug!("[args] header value: raw_header={} ", raw_header);
+                        debug!("[args] header value: key={} ", sp[0]);
+                        debug!("[args] header value: value={} ", sp[1]);
+                        headers.insert(HeaderName::from_str(sp[0]).unwrap(), HeaderValue::from_str(sp[1].trim()).unwrap());
                     }
                 });
                 Client::builder().default_headers(headers).build().unwrap()
