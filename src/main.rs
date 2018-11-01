@@ -20,6 +20,7 @@ use client::KongApiClient;
 use entity::{ApiInfo,
              ConfFileStyle,
              ConsumerInfo,
+             CredentialsInfo,
              KongConf,
              LegacyKongConf,
              LegacyPluginAppliedType,
@@ -148,6 +149,7 @@ fn runc(tmpl_path: &str, admin_url: &str, custom_headers_opt: Option<Vec<&str>>,
         ConfFileStyle::Suggested(suggested_conf) => {
             clear_before_init(&context);
             init_consumers(&context, &suggested_conf.consumers);
+            init_credentials(&context, &suggested_conf.credentials);
             init_services(&mut context, &suggested_conf.services);
             init_routes(&mut context, suggested_conf.routes);
             apply_plugins_to_service_route(&context, &suggested_conf.plugins)
@@ -301,6 +303,20 @@ fn init_consumers(context: &ExecutionContext, consumers: &[ConsumerInfo]) {
         context.kong_cli.add_consumer(&consumer_info);
     }
     info!("finished loading Consumers...");
+    info!("=================================");
+}
+
+fn init_credentials(context: &ExecutionContext, credentials: &[CredentialsInfo]) {
+    for credential_info in credentials {
+        debug!("credential_info {:?}", credential_info);
+
+        let consumer_id = &credential_info.target;
+        let plugin = &credential_info.name;
+        let plugin_conf = &credential_info.config;
+
+        context.kong_cli.add_credential(consumer_id, plugin, plugin_conf);
+    }
+    info!("finished loading Credentials...");
     info!("=================================");
 }
 

@@ -1,9 +1,9 @@
 use std::collections::BTreeMap;
 
 use serde_json::{Value};
-pub type ConsumerInfo = BTreeMap<String, String>;
 pub type ApiInfo = BTreeMap<String, String>;
 pub type ServiceInfo = BTreeMap<String, String>;
+pub type ConsumerInfo = BTreeMap<String, String>;
 
 #[derive(Debug, Deserialize, PartialEq)]
 pub struct LegacyKongConf {
@@ -18,6 +18,7 @@ pub struct KongConf {
     pub routes: Vec<RouteInfo>,
     pub plugins: Vec<PluginInfo>,
     pub consumers: Vec<BTreeMap<String, String>>,
+    pub credentials: Vec<CredentialsInfo>,
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
@@ -43,6 +44,15 @@ pub struct PluginInfo {
     #[serde(default)]
     pub config: BTreeMap<String, String>,
     pub enabled: bool,
+}
+
+#[derive(Debug, Deserialize, PartialEq)]
+pub struct CredentialsInfo {
+    pub name: String,
+    pub target: String,
+
+    #[serde(default)]
+    pub config: BTreeMap<String, String>,
 }
 
 #[derive(Debug, Deserialize)]
