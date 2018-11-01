@@ -19,7 +19,7 @@ kong-init is a tool for [Kong](https://getkong.org/) to allow automatic declarat
 
 * run on linux: openssl v1.1 (due to dependency link reqwest -> rust-native-tls -> openssl 1.1)
 * run on mac/windows: no extra dependency
-* development: rust 1.29.1
+* development: rust 1.30.0
 
 
 # Getting started
@@ -163,3 +163,4 @@ plugins:
       secret_is_base64: false
       anonymous: {{k-upsert-consumer:guest_user}}
 ```
+

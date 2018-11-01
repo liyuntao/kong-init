@@ -1,4 +1,4 @@
-FROM rust:1.29.1-slim as base
+FROM rust:1.30-slim as base
 
 WORKDIR /usr/src/kong-init
 COPY . .
