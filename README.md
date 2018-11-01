@@ -164,3 +164,9 @@ plugins:
       anonymous: {{k-upsert-consumer:guest_user}}
 ```
 
+## Thanks to
+
+People came together to create and keep improving kong-init. Couldn’t have done it without all of you.
+
+* @cilindrox
+* @kuryaki
