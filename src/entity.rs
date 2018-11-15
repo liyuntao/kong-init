@@ -10,6 +10,7 @@ pub struct LegacyKongConf {
     pub apis: Vec<ApiInfo>,
     pub plugins: Vec<LegacyPluginInfo>,
     pub consumers: Vec<BTreeMap<String, String>>,
+    pub credentials: Vec<CredentialsInfo>,
 }
 
 #[derive(Debug, Deserialize, PartialEq)]

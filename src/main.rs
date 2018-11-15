@@ -143,6 +143,7 @@ fn runc(tmpl_path: &str, admin_url: &str, custom_headers_opt: Option<Vec<&str>>,
         ConfFileStyle::Legacy(legacy_conf) => {
             clear_before_init_legacy(&context);
             init_consumers(&context, &legacy_conf.consumers);
+            init_credentials(&context, &legacy_conf.credentials);
             init_apis(&mut context, &legacy_conf.apis);
             apply_plugins_to_api(&context, &legacy_conf.plugins);
         }
