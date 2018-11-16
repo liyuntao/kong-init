@@ -33,7 +33,7 @@ impl<'t> KongApiClient<'t> {
             Some(header_strs) => {
                 let mut headers = HeaderMap::new();
                 header_strs.iter().for_each(|raw_header| {
-                    if !raw_header.contains(":") {
+                    if !raw_header.contains(':') {
                         warn!("invalid header value: {} has ignored!", raw_header)
                     } else {
                         let sp: Vec<&str> = raw_header.split(':').collect();
@@ -47,13 +47,13 @@ impl<'t> KongApiClient<'t> {
             }
         };
 
-        return KongApiClient { base_url: kong_admin_url, client: client };
+        KongApiClient { base_url: kong_admin_url, client }
     }
 
     pub fn get_node_info(&self) -> Result<KongInfo, Error> {
-        return self.client.get(&format!("{}/", self.base_url))
+        self.client.get(&format!("{}/", self.base_url))
             .send()
-            .and_then(|mut res| res.json::<KongInfo>());
+            .and_then(|mut res| res.json::<KongInfo>())
     }
 
     /*********** services ****************/
@@ -62,9 +62,10 @@ impl<'t> KongApiClient<'t> {
             None => format!("{}/services", self.base_url),
             Some(offset) => format!("{}/services?offset={}", self.base_url, offset)
         };
-        return self.client.get(&list_srv_url)
+
+        self.client.get(&list_srv_url)
             .send()
-            .and_then(|mut res| res.json::<ServiceList>());
+            .and_then(|mut res| res.json::<ServiceList>())
     }
 
     pub fn delete_all_services(&self) {
@@ -78,9 +79,8 @@ impl<'t> KongApiClient<'t> {
             self.delete_service(&service_item.id);
         });
 
-        match service_list.offset {
-            None => {}
-            Some(next) => self._delete_service_batch(Some(next))
+        if let Some(next) = service_list.offset {
+            self._delete_service_batch(Some(next))
         }
     }
 
@@ -103,7 +103,8 @@ impl<'t> KongApiClient<'t> {
 
     pub fn add_service(&self, payload: &ServiceInfo) -> Option<String> {
         let s_name = payload.get("name").unwrap();
-        return match self.client.post(&format!("{}/services", self.base_url))
+
+        match self.client.post(&format!("{}/services", self.base_url))
             .json(payload)
             .send() {
             Err(why) => {
@@ -121,7 +122,7 @@ impl<'t> KongApiClient<'t> {
                     None
                 }
             }
-        };
+        }
     }
 
     /*********** routes ****************/
@@ -130,9 +131,10 @@ impl<'t> KongApiClient<'t> {
             None => format!("{}/routes", self.base_url),
             Some(offset) => format!("{}/routes?offset={}", self.base_url, offset)
         };
-        return self.client.get(&list_route_url)
+
+        self.client.get(&list_route_url)
             .send()
-            .and_then(|mut res| res.json::<RouteList>());
+            .and_then(|mut res| res.json::<RouteList>())
     }
 
     pub fn delete_all_routes(&self) {
@@ -177,9 +179,9 @@ impl<'t> KongApiClient<'t> {
             Some(offset) => format!("{}/plugins?offset={}", self.base_url, offset)
         };
 
-        return self.client.get(&list_plugins_url)
+        self.client.get(&list_plugins_url)
             .send()
-            .and_then(|mut res| res.json::<PluginList>());
+            .and_then(|mut res| res.json::<PluginList>())
     }
 
     pub fn delete_all_plugins(&self) {
@@ -193,9 +195,8 @@ impl<'t> KongApiClient<'t> {
             self.delete_plugin_by_id(&plugin_item.id);
         });
 
-        match plugin_list.offset {
-            None => {}
-            Some(next) => self._delete_plugins_batch(Some(next))
+        if let Some(next) = plugin_list.offset {
+            self._delete_plugins_batch(Some(next))
         }
     }
 
@@ -228,27 +229,27 @@ impl<'t> KongApiClient<'t> {
             .send() {
             Err(why) => {
                 error!("add_route: {}", why);
-                return None;
+                None
             }
             Ok(mut resp) => {
                 if resp.status() == StatusCode::CREATED {
                     info!("Route {} has CREATED/updated!", route_info.name);
-                    return resp.json::<AddRouteResp>()
+                    resp.json::<AddRouteResp>()
                         .map(|obj| obj.id)
-                        .ok();
+                        .ok()
                 } else {
                     warn!("add_route: status={} {}", resp.status(), resp.text().unwrap());
-                    return None;
+                    None
                 }
             }
         }
     }
 
     pub fn get_api_counts(&self) -> Result<i32, Error> {
-        return self.client.get(&format!("{}/apis", self.base_url))
+        self.client.get(&format!("{}/apis", self.base_url))
             .send()
             .and_then(|mut res| res.json::<ListApiResp>())
-            .map(|list_api_info| list_api_info.total);
+            .map(|list_api_info| list_api_info.total)
     }
 
     pub fn delete_api(&self, api_name: &str) {
@@ -290,7 +291,7 @@ impl<'t> KongApiClient<'t> {
             "username": custom_id
         });
 
-        return match self.client.post(&format!("{}/consumers", self.base_url))
+        match self.client.post(&format!("{}/consumers", self.base_url))
             .json(&payload)
             .send() {
             Err(why) => {
@@ -298,7 +299,7 @@ impl<'t> KongApiClient<'t> {
                 String::from("error_id")
             }
             Ok(mut resp) => {
-                return if resp.status() == StatusCode::CREATED {
+                if resp.status() == StatusCode::CREATED {
                     info!("upsert_consumer: custom_id={} has CREATED!", custom_id);
                     resp.json::<ConsumerDO>().unwrap().id
                 } else if resp.status() == StatusCode::CONFLICT {
@@ -309,29 +310,29 @@ impl<'t> KongApiClient<'t> {
                 } else {
                     info!("upsert_consumer: unexpected status returned {}", resp.status());
                     String::from("error_id")
-                };
+                }
             }
-        };
+        }
     }
 
     pub fn add_consumer(&self, payload: &BTreeMap<String, String>) {
         let username = payload.get("username").unwrap();
-        return match self.client.post(&format!("{}/consumers", self.base_url))
+        match self.client.post(&format!("{}/consumers", self.base_url))
             .json(&payload)
             .send() {
             Err(why) => {
                 error!("upsert_consumer: {}", why);
             }
             Ok(resp) => {
-                return if resp.status() == StatusCode::CREATED {
+                if resp.status() == StatusCode::CREATED {
                     info!("upsert_consumer: username={} has CREATED!", username);
                 } else if resp.status() == StatusCode::CONFLICT {
                     info!("upsert_consumer: username={} has existed! skip..", username);
                 } else {
                     error!("upsert_consumer: unexpected status returned {}", resp.status());
-                };
+                }
             }
-        };
+        }
     }
 
     /*********** plugins end ****************/
@@ -344,7 +345,7 @@ impl<'t> KongApiClient<'t> {
         let plugin = plugin_name.to_string();
 
         for (k, v) in payload.iter() {
-            json_payload.insert(format!("{}", k), v.to_string());
+            json_payload.insert(k.to_string(), v.to_string());
         }
 
         match self.client.post(&format!("{}/consumers/{}/{}", self.base_url, consumer, plugin))

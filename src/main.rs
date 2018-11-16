@@ -108,14 +108,14 @@ struct ExecutionContext<'t> {
 impl<'t> ExecutionContext<'t> {
     pub fn new(admin_url: &'t str, custom_headers_opt: Option<Vec<&'t str>>) -> ExecutionContext<'t> {
         let kong_cli = KongApiClient::build_with_url_header(admin_url, custom_headers_opt);
-        return ExecutionContext {
+        ExecutionContext {
             api_names: Vec::new(),
             kong_cli: Box::new(kong_cli),
             support_api: false,
             support_service_route: false,
             service_name_id_mapping: HashMap::new(),
             route_name_id_mapping: HashMap::new(),
-        };
+        }
     }
 }
 
@@ -142,15 +142,29 @@ fn runc(tmpl_path: &str, admin_url: &str, custom_headers_opt: Option<Vec<&str>>,
     match deserialized_conf {
         ConfFileStyle::Legacy(legacy_conf) => {
             clear_before_init_legacy(&context);
-            init_consumers(&context, &legacy_conf.consumers);
-            init_credentials(&context, &legacy_conf.credentials);
+
+            if let Some(consumers) = &legacy_conf.consumers {
+                init_consumers(&context, consumers);
+            }
+
+            if let Some(credentials) = &legacy_conf.credentials {
+                init_credentials(&context, credentials);
+            }
+
             init_apis(&mut context, &legacy_conf.apis);
             apply_plugins_to_api(&context, &legacy_conf.plugins);
         }
         ConfFileStyle::Suggested(suggested_conf) => {
             clear_before_init(&context);
-            init_consumers(&context, &suggested_conf.consumers);
-            init_credentials(&context, &suggested_conf.credentials);
+
+            if let Some(consumers) = &suggested_conf.consumers {
+                init_consumers(&context, consumers);
+            }
+
+            if let Some(credentials) = &suggested_conf.credentials {
+                init_credentials(&context, credentials);
+            }
+
             init_services(&mut context, &suggested_conf.services);
             init_routes(&mut context, suggested_conf.routes);
             apply_plugins_to_service_route(&context, &suggested_conf.plugins)
@@ -166,7 +180,8 @@ fn runc(tmpl_path: &str, admin_url: &str, custom_headers_opt: Option<Vec<&str>>,
 
 fn verify_kong_version(context: &mut ExecutionContext) -> bool {
     let cli = &context.kong_cli;
-    return match cli.get_node_info() {
+
+    match cli.get_node_info() {
         Err(why) => {
             error!("Could not reach Kong on {}; reason: {}", cli.base_url, why);
             false
@@ -213,7 +228,7 @@ fn verify_kong_version(context: &mut ExecutionContext) -> bool {
             }
             true
         }
-    };
+    }
 }
 
 fn parse_template(tmpl_file_path: &str, context: &ExecutionContext) -> ConfFileStyle {
@@ -221,17 +236,17 @@ fn parse_template(tmpl_file_path: &str, context: &ExecutionContext) -> ConfFileS
 
     match File::open(tmpl_file_path)
         .and_then(|mut file| file.read_to_string(&mut contents))
-        .map_err(|io_err| Error::io(io_err))
+        .map_err(Error::io)
         .and_then(|_| {
             if contents.contains("apis:\n") && contents.contains("services:\n")
                 || (contents.contains("apis:\n") && contents.contains("services:\n")) {
                 Ok(ConfFileStyle::IllegalFormat { msg: "yaml file cannot contains both 'apis' and 'services/routes' at the same time".to_string() })
             } else if contents.contains("apis:\n") {
                 serde_yaml::from_str::<LegacyKongConf>(&replace_env_and_directive(&contents, context))
-                    .map(|lkc| ConfFileStyle::Legacy(lkc))
+                    .map(ConfFileStyle::Legacy)
             } else {
                 serde_yaml::from_str::<KongConf>(&replace_env_and_directive(&contents, context))
-                    .map(|kc| ConfFileStyle::Suggested(kc))
+                    .map(ConfFileStyle::Suggested)
             }
         }) {
         Err(why) => {
@@ -247,7 +262,7 @@ fn replace_env_and_directive(input: &str, context: &ExecutionContext) -> String 
     debug!("full text after env replacement: \n{}", after_env);
     let after_d = _replace_directive(&after_env, context);
     debug!("full text after directive replacement: \n{}", after_d);
-    return after_d;
+    after_d
 }
 
 fn _replace_directive(input: &str, context: &ExecutionContext) -> String {
@@ -258,7 +273,7 @@ fn _replace_directive(input: &str, context: &ExecutionContext) -> String {
     for caps in dd_re.captures_iter(input) {
         let cap_str = caps.get(1).unwrap().as_str();
 
-        let vec: Vec<&str> = cap_str.splitn(2, ":").collect();
+        let vec: Vec<&str> = cap_str.splitn(2, ':').collect();
 
         match vec[0] {
             "k-upsert-consumer" => {
@@ -272,7 +287,7 @@ fn _replace_directive(input: &str, context: &ExecutionContext) -> String {
     for (k, v) in shit.iter() {
         output = output.replace(&format!("{{{{{}}}}}", k), v);
     }
-    return output;
+    output
 }
 
 fn _replace_env(input: &str) -> String {
@@ -295,7 +310,7 @@ fn _replace_env(input: &str) -> String {
     for (k, v) in tmp.iter() {
         output = output.replace(&format!("${{{}}}", k), v);
     }
-    return output;
+    output
 }
 
 fn init_consumers(context: &ExecutionContext, consumers: &[ConsumerInfo]) {
@@ -343,7 +358,7 @@ fn apply_plugins_to_api(context: &ExecutionContext, plugins: &[LegacyPluginInfo]
             match &plugin_info.target_api as &str {
                 "all" => (LegacyPluginAppliedType::ALL, None),
                 "none" => (LegacyPluginAppliedType::NONE, None),
-                others => (LegacyPluginAppliedType::SOME, Some(Vec::from_iter(others.split(",").map(String::from)))),
+                others => (LegacyPluginAppliedType::SOME, Some(Vec::from_iter(others.split(',').map(String::from)))),
             };
 
         context.kong_cli.apply_plugin_to_api_legacy(plugin_type, target_apis, plugin_conf);
@@ -377,7 +392,7 @@ fn init_services(context: &mut ExecutionContext, services: &[ServiceInfo]) {
 fn init_routes(context: &mut ExecutionContext, routes: Vec<RouteInfo>) {
     for route_info in routes {
         let route_name = route_info.name.clone();
-        let service_id = context.service_name_id_mapping.get(&route_info.apply_to).unwrap();
+        let service_id = &context.service_name_id_mapping[&route_info.apply_to];
         let rid = context.kong_cli
             .add_route_to_service(service_id.to_string().clone(), route_info).unwrap();
         context.route_name_id_mapping.insert(route_name, rid);
@@ -401,9 +416,9 @@ fn apply_plugins_to_service_route(context: &ExecutionContext, plugins: &[PluginI
             let mut t = target.trim_left_matches("s[").to_string();
             let tm = t.len();
             t.truncate(tm - 1);
-            let tmp = Vec::from_iter(t.split(",")
+            let tmp = Vec::from_iter(t.split(',')
                 .map(String::from)).iter().map(|s_name| {
-                context.service_name_id_mapping.get(s_name).unwrap().clone()
+                context.service_name_id_mapping[s_name].clone()
             }).collect();
             debug!("plugin {} with service target {:?}", plugin_info.name, tmp);
             PluginTarget::SERVICES(tmp)
@@ -411,9 +426,9 @@ fn apply_plugins_to_service_route(context: &ExecutionContext, plugins: &[PluginI
             let mut t = target.trim_left_matches("r[").to_string();
             let tm = t.len();
             t.truncate(tm - 1);
-            let tmp = Vec::from_iter(t.split(",")
+            let tmp = Vec::from_iter(t.split(',')
                 .map(String::from)).iter().map(|r_name| {
-                context.route_name_id_mapping.get(r_name).unwrap().clone()
+                context.route_name_id_mapping[r_name].clone()
             }).collect();
             debug!("plugin {} with route target {:?}", plugin_info.name, tmp);
             PluginTarget::Routes(tmp)
