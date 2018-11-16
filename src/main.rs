@@ -17,17 +17,10 @@ extern crate serde_yaml;
 
 use clap::{App, Arg};
 use client::KongApiClient;
-use entity::{ApiInfo,
-             ConfFileStyle,
-             ConsumerInfo,
-             CredentialsInfo,
-             KongConf,
-             LegacyKongConf,
-             LegacyPluginAppliedType,
-             LegacyPluginInfo,
-             PluginInfo,
-             PluginTarget,
-             RouteInfo, ServiceInfo};
+use entity::{
+    ApiInfo, ConfFileStyle, ConsumerInfo, CredentialsInfo, KongConf, LegacyKongConf,
+    LegacyPluginAppliedType, LegacyPluginInfo, PluginInfo, PluginTarget, RouteInfo, ServiceInfo,
+};
 use regex::Regex;
 use semver::Version;
 use serde_yaml::Error;
@@ -57,39 +50,44 @@ fn main() {
     let matches = App::new("kong-init")
         .version("0.8.0-rc-3")
         .about("")
-        .arg(Arg::with_name("path")
-            .required(true)
-            .short("p")
-            .long("path")
-            .takes_value(true)
-            .help("path to route defination file"))
-        .arg(Arg::with_name("admin-url")
-            .required(true)
-            .long("url")
-            .takes_value(true)
-            .help("admin url of kong-server(e.g. http://kong_ip:8001)"))
-        .arg(Arg::with_name("header")
-            .long("header")
-            .multiple(true)
-            .takes_value(true)
-            .help("add custom header for admin-api request"))
-        .arg(Arg::with_name("wait")
-            .long("wait")
-            .short("w")
-            .help("wait until kong-server is ready(suit for init under cloud environment)"))
-        .get_matches();
+        .arg(
+            Arg::with_name("path")
+                .required(true)
+                .short("p")
+                .long("path")
+                .takes_value(true)
+                .help("path to route defination file"),
+        ).arg(
+            Arg::with_name("admin-url")
+                .required(true)
+                .long("url")
+                .takes_value(true)
+                .help("admin url of kong-server(e.g. http://kong_ip:8001)"),
+        ).arg(
+            Arg::with_name("header")
+                .long("header")
+                .multiple(true)
+                .takes_value(true)
+                .help("add custom header for admin-api request"),
+        ).arg(
+            Arg::with_name("wait")
+                .long("wait")
+                .short("w")
+                .help("wait until kong-server is ready(suit for init under cloud environment)"),
+        ).get_matches();
 
     let tmpl_path = matches.value_of("path").unwrap();
     let admin_url = matches.value_of("admin-url").unwrap();
 
-    let custom_headers_opt: Option<Vec<&str>> = matches.values_of("header").map(|values| values.collect());
+    let custom_headers_opt: Option<Vec<&str>> =
+        matches.values_of("header").map(|values| values.collect());
     info!("Start serving KongInit...");
     info!("Connecting to Kong on {} using {}", admin_url, tmpl_path);
 
     let is_wait = matches.is_present("wait");
 
     if let Err(_e) = runc(tmpl_path, admin_url, custom_headers_opt, is_wait) {
-//        error!("unable to init kong: {}", _e);
+        //        error!("unable to init kong: {}", _e);
         std::process::exit(1)
     }
 }
@@ -106,7 +104,10 @@ struct ExecutionContext<'t> {
 }
 
 impl<'t> ExecutionContext<'t> {
-    pub fn new(admin_url: &'t str, custom_headers_opt: Option<Vec<&'t str>>) -> ExecutionContext<'t> {
+    pub fn new(
+        admin_url: &'t str,
+        custom_headers_opt: Option<Vec<&'t str>>,
+    ) -> ExecutionContext<'t> {
         let kong_cli = KongApiClient::build_with_url_header(admin_url, custom_headers_opt);
         ExecutionContext {
             api_names: Vec::new(),
@@ -119,7 +120,12 @@ impl<'t> ExecutionContext<'t> {
     }
 }
 
-fn runc(tmpl_path: &str, admin_url: &str, custom_headers_opt: Option<Vec<&str>>, is_wait: bool) -> Result<(), Error> {
+fn runc(
+    tmpl_path: &str,
+    admin_url: &str,
+    custom_headers_opt: Option<Vec<&str>>,
+    is_wait: bool,
+) -> Result<(), Error> {
     let mut context = ExecutionContext::new(admin_url, custom_headers_opt);
 
     if is_wait {
@@ -208,7 +214,10 @@ fn verify_kong_version(context: &mut ExecutionContext) -> bool {
                 } else {
                     "0.13.1" // FIXME
                 };
-                info!("detected EE version, regarded as the relevant CE version: {}", &ce_ver);
+                info!(
+                    "detected EE version, regarded as the relevant CE version: {}",
+                    &ce_ver
+                );
                 ce_ver
             } else {
                 kong_ver
@@ -278,7 +287,10 @@ fn _replace_directive(input: &str, context: &ExecutionContext) -> String {
         match vec[0] {
             "k-upsert-consumer" => {
                 debug!("create new consumer {}", vec[1]);
-                shit.insert(cap_str.to_string(), context.kong_cli.init_guest_consumer(vec[1]));
+                shit.insert(
+                    cap_str.to_string(),
+                    context.kong_cli.init_guest_consumer(vec[1]),
+                );
             }
             _ => warn!("directive parsing error {}", vec[0]),
         }
@@ -330,7 +342,9 @@ fn init_credentials(context: &ExecutionContext, credentials: &[CredentialsInfo])
         let plugin = &credential_info.name;
         let plugin_conf = &credential_info.config;
 
-        context.kong_cli.add_credential(consumer_id, plugin, plugin_conf);
+        context
+            .kong_cli
+            .add_credential(consumer_id, plugin, plugin_conf);
     }
     info!("finished loading Credentials...");
     info!("=================================");
@@ -358,10 +372,15 @@ fn apply_plugins_to_api(context: &ExecutionContext, plugins: &[LegacyPluginInfo]
             match &plugin_info.target_api as &str {
                 "all" => (LegacyPluginAppliedType::ALL, None),
                 "none" => (LegacyPluginAppliedType::NONE, None),
-                others => (LegacyPluginAppliedType::SOME, Some(Vec::from_iter(others.split(',').map(String::from)))),
+                others => (
+                    LegacyPluginAppliedType::SOME,
+                    Some(Vec::from_iter(others.split(',').map(String::from))),
+                ),
             };
 
-        context.kong_cli.apply_plugin_to_api_legacy(plugin_type, target_apis, plugin_conf);
+        context
+            .kong_cli
+            .apply_plugin_to_api_legacy(plugin_type, target_apis, plugin_conf);
     }
     info!("finished loading plugins...");
     info!("=================================");
@@ -383,7 +402,9 @@ fn init_services(context: &mut ExecutionContext, services: &[ServiceInfo]) {
     for service_info in services {
         let sid = context.kong_cli.add_service(&service_info).unwrap();
         let service_name = service_info.get("name").unwrap();
-        context.service_name_id_mapping.insert(service_name.to_string(), sid);
+        context
+            .service_name_id_mapping
+            .insert(service_name.to_string(), sid);
     }
     info!("finished loading services...");
     info!("=================================");
@@ -393,8 +414,10 @@ fn init_routes(context: &mut ExecutionContext, routes: Vec<RouteInfo>) {
     for route_info in routes {
         let route_name = route_info.name.clone();
         let service_id = &context.service_name_id_mapping[&route_info.apply_to];
-        let rid = context.kong_cli
-            .add_route_to_service(service_id.to_string().clone(), route_info).unwrap();
+        let rid = context
+            .kong_cli
+            .add_route_to_service(service_id.to_string().clone(), route_info)
+            .unwrap();
         context.route_name_id_mapping.insert(route_name, rid);
     }
     info!("finished loading routes...");
@@ -416,20 +439,20 @@ fn apply_plugins_to_service_route(context: &ExecutionContext, plugins: &[PluginI
             let mut t = target.trim_left_matches("s[").to_string();
             let tm = t.len();
             t.truncate(tm - 1);
-            let tmp = Vec::from_iter(t.split(',')
-                .map(String::from)).iter().map(|s_name| {
-                context.service_name_id_mapping[s_name].clone()
-            }).collect();
+            let tmp = Vec::from_iter(t.split(',').map(String::from))
+                .iter()
+                .map(|s_name| context.service_name_id_mapping[s_name].clone())
+                .collect();
             debug!("plugin {} with service target {:?}", plugin_info.name, tmp);
             PluginTarget::SERVICES(tmp)
         } else if route_re.is_match(target) {
             let mut t = target.trim_left_matches("r[").to_string();
             let tm = t.len();
             t.truncate(tm - 1);
-            let tmp = Vec::from_iter(t.split(',')
-                .map(String::from)).iter().map(|r_name| {
-                context.route_name_id_mapping[r_name].clone()
-            }).collect();
+            let tmp = Vec::from_iter(t.split(',').map(String::from))
+                .iter()
+                .map(|r_name| context.route_name_id_mapping[r_name].clone())
+                .collect();
             debug!("plugin {} with route target {:?}", plugin_info.name, tmp);
             PluginTarget::Routes(tmp)
         } else {

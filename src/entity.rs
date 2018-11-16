@@ -1,6 +1,6 @@
 use std::collections::BTreeMap;
 
-use serde_json::{Value};
+use serde_json::Value;
 pub type ApiInfo = BTreeMap<String, String>;
 pub type ServiceInfo = BTreeMap<String, String>;
 pub type ConsumerInfo = BTreeMap<String, String>;
@@ -138,7 +138,7 @@ pub enum PluginTarget {
 }
 
 pub enum ConfFileStyle {
-    Suggested(KongConf), // services + routes + plugins
-    Legacy(LegacyKongConf), // apis + plugins
-    IllegalFormat { msg: String } // mixed or missing necessary field
+    Suggested(KongConf),           // services + routes + plugins
+    Legacy(LegacyKongConf),        // apis + plugins
+    IllegalFormat { msg: String }, // mixed or missing necessary field
 }

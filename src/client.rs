@@ -1,21 +1,12 @@
-use entity::{AddRouteResp,
-             AddServiceResp,
-             ApiInfo,
-             ConsumerDO,
-             KongInfo,
-             LegacyPluginAppliedType,
-             ListApiResp,
-             PluginInfo,
-             PluginTarget,
-             RouteInfo,
-             PluginList,
-             RouteList,
-             ServiceInfo,
-             ServiceList};
+use entity::{
+    AddRouteResp, AddServiceResp, ApiInfo, ConsumerDO, KongInfo, LegacyPluginAppliedType,
+    ListApiResp, PluginInfo, PluginList, PluginTarget, RouteInfo, RouteList, ServiceInfo,
+    ServiceList,
+};
 
 use http::StatusCode;
-use reqwest::{Client, Error};
 use reqwest::header::{HeaderMap, HeaderName, HeaderValue};
+use reqwest::{Client, Error};
 use serde_json::{Map as SerdeMap, Value};
 use std::collections::BTreeMap;
 use std::collections::HashMap;
@@ -27,7 +18,10 @@ pub struct KongApiClient<'t> {
 }
 
 impl<'t> KongApiClient<'t> {
-    pub fn build_with_url_header(kong_admin_url: &'t str, custom_headers_opt: Option<Vec<&'t str>>) -> KongApiClient<'t> {
+    pub fn build_with_url_header(
+        kong_admin_url: &'t str,
+        custom_headers_opt: Option<Vec<&'t str>>,
+    ) -> KongApiClient<'t> {
         let client = match custom_headers_opt {
             None => Client::new(),
             Some(header_strs) => {
@@ -40,18 +34,25 @@ impl<'t> KongApiClient<'t> {
                         debug!("[args] header value: raw_header={} ", raw_header);
                         debug!("[args] header value: key={} ", sp[0]);
                         debug!("[args] header value: value={} ", sp[1]);
-                        headers.insert(HeaderName::from_str(sp[0]).unwrap(), HeaderValue::from_str(sp[1].trim()).unwrap());
+                        headers.insert(
+                            HeaderName::from_str(sp[0]).unwrap(),
+                            HeaderValue::from_str(sp[1].trim()).unwrap(),
+                        );
                     }
                 });
                 Client::builder().default_headers(headers).build().unwrap()
             }
         };
 
-        KongApiClient { base_url: kong_admin_url, client }
+        KongApiClient {
+            base_url: kong_admin_url,
+            client,
+        }
     }
 
     pub fn get_node_info(&self) -> Result<KongInfo, Error> {
-        self.client.get(&format!("{}/", self.base_url))
+        self.client
+            .get(&format!("{}/", self.base_url))
             .send()
             .and_then(|mut res| res.json::<KongInfo>())
     }
@@ -60,10 +61,11 @@ impl<'t> KongApiClient<'t> {
     pub fn list_services(&self, offset: Option<String>) -> Result<ServiceList, Error> {
         let list_srv_url = match offset {
             None => format!("{}/services", self.base_url),
-            Some(offset) => format!("{}/services?offset={}", self.base_url, offset)
+            Some(offset) => format!("{}/services?offset={}", self.base_url, offset),
         };
 
-        self.client.get(&list_srv_url)
+        self.client
+            .get(&list_srv_url)
             .send()
             .and_then(|mut res| res.json::<ServiceList>())
     }
@@ -85,8 +87,13 @@ impl<'t> KongApiClient<'t> {
     }
 
     pub fn delete_service(&self, service_id_or_name: &str) {
-        match self.client.delete(&format!("{}/services/{}", self.base_url, service_id_or_name))
-            .send() {
+        match self
+            .client
+            .delete(&format!(
+                "{}/services/{}",
+                self.base_url, service_id_or_name
+            )).send()
+        {
             Err(why) => error!("delete_service: {} using id={}", why, service_id_or_name),
             Ok(resp) => {
                 if resp.status() == StatusCode::NO_CONTENT {
@@ -95,7 +102,11 @@ impl<'t> KongApiClient<'t> {
                     debug!("service {} not found, skip!", service_id_or_name)
                 } else {
                     // TODO add body msg
-                    error!("delete_service: {} using id={}", resp.status(), service_id_or_name)
+                    error!(
+                        "delete_service: {} using id={}",
+                        resp.status(),
+                        service_id_or_name
+                    )
                 }
             }
         }
@@ -104,9 +115,12 @@ impl<'t> KongApiClient<'t> {
     pub fn add_service(&self, payload: &ServiceInfo) -> Option<String> {
         let s_name = payload.get("name").unwrap();
 
-        match self.client.post(&format!("{}/services", self.base_url))
+        match self
+            .client
+            .post(&format!("{}/services", self.base_url))
             .json(payload)
-            .send() {
+            .send()
+        {
             Err(why) => {
                 error!("add_service: {}", why);
                 None
@@ -114,9 +128,7 @@ impl<'t> KongApiClient<'t> {
             Ok(mut resp) => {
                 if resp.status() == StatusCode::CREATED {
                     info!("Service {} has CREATED/updated!", s_name);
-                    resp.json::<AddServiceResp>()
-                        .map(|obj| obj.id)
-                        .ok()
+                    resp.json::<AddServiceResp>().map(|obj| obj.id).ok()
                 } else {
                     warn!("add_service: {}", resp.status());
                     None
@@ -129,10 +141,11 @@ impl<'t> KongApiClient<'t> {
     pub fn list_routes(&self, offset: Option<String>) -> Result<RouteList, Error> {
         let list_route_url = match offset {
             None => format!("{}/routes", self.base_url),
-            Some(offset) => format!("{}/routes?offset={}", self.base_url, offset)
+            Some(offset) => format!("{}/routes?offset={}", self.base_url, offset),
         };
 
-        self.client.get(&list_route_url)
+        self.client
+            .get(&list_route_url)
             .send()
             .and_then(|mut res| res.json::<RouteList>())
     }
@@ -150,13 +163,16 @@ impl<'t> KongApiClient<'t> {
 
         match route_list.offset {
             None => {}
-            Some(next) => self._delete_route_batch(Some(next))
+            Some(next) => self._delete_route_batch(Some(next)),
         }
     }
 
     pub fn delete_route(&self, route_id: &str) {
-        match self.client.delete(&format!("{}/routes/{}", self.base_url, route_id))
-            .send() {
+        match self
+            .client
+            .delete(&format!("{}/routes/{}", self.base_url, route_id))
+            .send()
+        {
             Err(why) => error!("delete_route: {} using id={}", why, route_id),
             Ok(resp) => {
                 if resp.status() == StatusCode::NO_CONTENT {
@@ -176,10 +192,11 @@ impl<'t> KongApiClient<'t> {
     pub fn list_plugins(&self, offset: Option<String>) -> Result<PluginList, Error> {
         let list_plugins_url = match offset {
             None => format!("{}/plugins", self.base_url),
-            Some(offset) => format!("{}/plugins?offset={}", self.base_url, offset)
+            Some(offset) => format!("{}/plugins?offset={}", self.base_url, offset),
         };
 
-        self.client.get(&list_plugins_url)
+        self.client
+            .get(&list_plugins_url)
             .send()
             .and_then(|mut res| res.json::<PluginList>())
     }
@@ -201,8 +218,11 @@ impl<'t> KongApiClient<'t> {
     }
 
     pub fn delete_plugin_by_id(&self, plugin_id: &str) {
-        match self.client.delete(&format!("{}/plugins/{}", self.base_url, plugin_id))
-            .send() {
+        match self
+            .client
+            .delete(&format!("{}/plugins/{}", self.base_url, plugin_id))
+            .send()
+        {
             Err(why) => error!("delete_plugin_by_id: {} using id={}", why, plugin_id),
             Ok(resp) => {
                 if resp.status() == StatusCode::NO_CONTENT {
@@ -210,23 +230,34 @@ impl<'t> KongApiClient<'t> {
                 } else if resp.status() == StatusCode::NOT_FOUND {
                     debug!("plugin {} not found, skip!", plugin_id)
                 } else {
-                    error!("delete_plugin_by_id: {} using id={}", resp.status(), plugin_id)
+                    error!(
+                        "delete_plugin_by_id: {} using id={}",
+                        resp.status(),
+                        plugin_id
+                    )
                 }
             }
         }
     }
     /*********** plugins end ****************/
 
-    pub fn add_route_to_service(&self, service_id: String, mut route_info: RouteInfo) -> Option<String> {
+    pub fn add_route_to_service(
+        &self,
+        service_id: String,
+        mut route_info: RouteInfo,
+    ) -> Option<String> {
         let route_cfg = &mut route_info.config;
 
         let mut silly_obj_map = SerdeMap::new();
         silly_obj_map.insert("id".to_string(), Value::String(service_id));
         route_cfg.insert("service".to_string(), Value::Object(silly_obj_map));
 
-        match self.client.post(&format!("{}/routes", self.base_url))
+        match self
+            .client
+            .post(&format!("{}/routes", self.base_url))
             .json(&route_cfg)
-            .send() {
+            .send()
+        {
             Err(why) => {
                 error!("add_route: {}", why);
                 None
@@ -234,11 +265,13 @@ impl<'t> KongApiClient<'t> {
             Ok(mut resp) => {
                 if resp.status() == StatusCode::CREATED {
                     info!("Route {} has CREATED/updated!", route_info.name);
-                    resp.json::<AddRouteResp>()
-                        .map(|obj| obj.id)
-                        .ok()
+                    resp.json::<AddRouteResp>().map(|obj| obj.id).ok()
                 } else {
-                    warn!("add_route: status={} {}", resp.status(), resp.text().unwrap());
+                    warn!(
+                        "add_route: status={} {}",
+                        resp.status(),
+                        resp.text().unwrap()
+                    );
                     None
                 }
             }
@@ -246,15 +279,19 @@ impl<'t> KongApiClient<'t> {
     }
 
     pub fn get_api_counts(&self) -> Result<i32, Error> {
-        self.client.get(&format!("{}/apis", self.base_url))
+        self.client
+            .get(&format!("{}/apis", self.base_url))
             .send()
             .and_then(|mut res| res.json::<ListApiResp>())
             .map(|list_api_info| list_api_info.total)
     }
 
     pub fn delete_api(&self, api_name: &str) {
-        match self.client.delete(&format!("{}/apis/{}", self.base_url, api_name))
-            .send() {
+        match self
+            .client
+            .delete(&format!("{}/apis/{}", self.base_url, api_name))
+            .send()
+        {
             Err(why) => error!("delete_api: {}", why),
             Ok(resp) => {
                 if resp.status() == StatusCode::NO_CONTENT {
@@ -269,9 +306,12 @@ impl<'t> KongApiClient<'t> {
     }
 
     pub fn upsert_api(&self, api_name: &str, payload: &ApiInfo) {
-        match self.client.put(&format!("{}/apis", self.base_url))
+        match self
+            .client
+            .put(&format!("{}/apis", self.base_url))
             .json(payload)
-            .send() {
+            .send()
+        {
             Err(why) => error!("upsert_api: {}", why),
             Ok(mut resp) => {
                 if resp.status() == StatusCode::CREATED {
@@ -291,9 +331,12 @@ impl<'t> KongApiClient<'t> {
             "username": custom_id
         });
 
-        match self.client.post(&format!("{}/consumers", self.base_url))
+        match self
+            .client
+            .post(&format!("{}/consumers", self.base_url))
             .json(&payload)
-            .send() {
+            .send()
+        {
             Err(why) => {
                 error!("upsert_consumer: {}", why);
                 String::from("error_id")
@@ -303,12 +346,17 @@ impl<'t> KongApiClient<'t> {
                     info!("upsert_consumer: custom_id={} has CREATED!", custom_id);
                     resp.json::<ConsumerDO>().unwrap().id
                 } else if resp.status() == StatusCode::CONFLICT {
-                    self.client.get(&format!("{}/consumers/{}", self.base_url, custom_id))
+                    self.client
+                        .get(&format!("{}/consumers/{}", self.base_url, custom_id))
                         .send()
                         .and_then(|mut res| res.json::<ConsumerDO>())
-                        .map(|c_info| c_info.id).unwrap()
+                        .map(|c_info| c_info.id)
+                        .unwrap()
                 } else {
-                    info!("upsert_consumer: unexpected status returned {}", resp.status());
+                    info!(
+                        "upsert_consumer: unexpected status returned {}",
+                        resp.status()
+                    );
                     String::from("error_id")
                 }
             }
@@ -317,9 +365,12 @@ impl<'t> KongApiClient<'t> {
 
     pub fn add_consumer(&self, payload: &BTreeMap<String, String>) {
         let username = payload.get("username").unwrap();
-        match self.client.post(&format!("{}/consumers", self.base_url))
+        match self
+            .client
+            .post(&format!("{}/consumers", self.base_url))
             .json(&payload)
-            .send() {
+            .send()
+        {
             Err(why) => {
                 error!("upsert_consumer: {}", why);
             }
@@ -329,7 +380,10 @@ impl<'t> KongApiClient<'t> {
                 } else if resp.status() == StatusCode::CONFLICT {
                     info!("upsert_consumer: username={} has existed! skip..", username);
                 } else {
-                    error!("upsert_consumer: unexpected status returned {}", resp.status());
+                    error!(
+                        "upsert_consumer: unexpected status returned {}",
+                        resp.status()
+                    );
                 }
             }
         }
@@ -339,7 +393,12 @@ impl<'t> KongApiClient<'t> {
 
     /*********** credentials ****************/
 
-    pub fn add_credential(&self, consumer_id: &str, plugin_name: &str, payload: &BTreeMap<String, String>) {
+    pub fn add_credential(
+        &self,
+        consumer_id: &str,
+        plugin_name: &str,
+        payload: &BTreeMap<String, String>,
+    ) {
         let mut json_payload = HashMap::new();
         let consumer = consumer_id.to_string();
         let plugin = plugin_name.to_string();
@@ -348,16 +407,29 @@ impl<'t> KongApiClient<'t> {
             json_payload.insert(k.to_string(), v.to_string());
         }
 
-        match self.client.post(&format!("{}/consumers/{}/{}", self.base_url, consumer, plugin))
-            .json(&json_payload)
-            .send() {
+        match self
+            .client
+            .post(&format!(
+                "{}/consumers/{}/{}",
+                self.base_url, consumer, plugin
+            )).json(&json_payload)
+            .send()
+        {
             Err(why) => error!("credentials: {}", why),
             Ok(resp) => {
                 if resp.status() == StatusCode::CREATED || resp.status() == StatusCode::CONFLICT {
-                    info!("succeed creating credential {} to consumer {}", plugin, consumer);
+                    info!(
+                        "succeed creating credential {} to consumer {}",
+                        plugin, consumer
+                    );
                 } else {
                     // TODO add body msg
-                    error!("_credentials: {} using {}/{}", resp.status(), consumer, plugin);
+                    error!(
+                        "_credentials: {} using {}/{}",
+                        resp.status(),
+                        consumer,
+                        plugin
+                    );
                 }
             }
         }
@@ -365,20 +437,31 @@ impl<'t> KongApiClient<'t> {
 
     /*********** credentials end ****************/
 
-    fn _apply_plugin_to_one(&self, plugin_type: &str, plugin_conf: &BTreeMap<String, String>, api_name: &str) {
+    fn _apply_plugin_to_one(
+        &self,
+        plugin_type: &str,
+        plugin_conf: &BTreeMap<String, String>,
+        api_name: &str,
+    ) {
         let mut json_payload = HashMap::new();
         json_payload.insert("name".to_string(), plugin_type.to_string());
         for (k, v) in plugin_conf.iter() {
             json_payload.insert(format!("config.{}", k), v.to_string());
         }
 
-        match self.client.post(&format!("{}/apis/{}/plugins", self.base_url, api_name))
+        match self
+            .client
+            .post(&format!("{}/apis/{}/plugins", self.base_url, api_name))
             .json(&json_payload)
-            .send() {
+            .send()
+        {
             Err(why) => error!("apply_plugin_to_one: {}", why),
             Ok(resp) => {
                 if resp.status() == StatusCode::CREATED || resp.status() == StatusCode::CONFLICT {
-                    info!("succeed applying plugin {} to API {}", plugin_type, api_name)
+                    info!(
+                        "succeed applying plugin {} to API {}",
+                        plugin_type, api_name
+                    )
                 } else {
                     error!("_apply_plugin_to_one: {}", resp.status())
                 }
@@ -393,9 +476,12 @@ impl<'t> KongApiClient<'t> {
             json_payload.insert(format!("config.{}", k), v.to_string());
         }
 
-        match self.client.post(&format!("{}/plugins", self.base_url))
+        match self
+            .client
+            .post(&format!("{}/plugins", self.base_url))
             .json(&json_payload)
-            .send() {
+            .send()
+        {
             Err(why) => error!("apply_plugin_to_all: {}", why),
             Ok(resp) => {
                 if resp.status() == StatusCode::CREATED || resp.status() == StatusCode::CONFLICT {
@@ -407,9 +493,16 @@ impl<'t> KongApiClient<'t> {
         }
     }
 
-    pub fn apply_plugin_to_api_legacy(&self, plugin_type: &str, target_apis: (LegacyPluginAppliedType, Option<Vec<String>>), plugin_conf: &BTreeMap<String, String>) {
+    pub fn apply_plugin_to_api_legacy(
+        &self,
+        plugin_type: &str,
+        target_apis: (LegacyPluginAppliedType, Option<Vec<String>>),
+        plugin_conf: &BTreeMap<String, String>,
+    ) {
         match target_apis {
-            (LegacyPluginAppliedType::ALL, _) => self._apply_plugin_to_all(plugin_type, plugin_conf),
+            (LegacyPluginAppliedType::ALL, _) => {
+                self._apply_plugin_to_all(plugin_type, plugin_conf)
+            }
             (LegacyPluginAppliedType::SOME, Some(apis)) => {
                 for api_name in apis {
                     self._apply_plugin_to_one(plugin_type, plugin_conf, &api_name)
@@ -450,13 +543,15 @@ impl<'t> KongApiClient<'t> {
     }
 
     pub fn _apply_plugin(&self, target_desc: &str, payload: &HashMap<String, Value>) {
-        match self.client.post(&format!("{}/plugins", self.base_url))
+        match self
+            .client
+            .post(&format!("{}/plugins", self.base_url))
             .json(payload)
-            .send() {
+            .send()
+        {
             Err(why) => error!("apply_plugin_to_one: {}", why),
             Ok(resp) => {
-                if resp.status() == StatusCode::CREATED
-                    || resp.status() == StatusCode::CONFLICT {
+                if resp.status() == StatusCode::CREATED || resp.status() == StatusCode::CONFLICT {
                     info!("{}", target_desc)
                 } else {
                     error!("_apply_plugin: error {}", resp.status())
@@ -465,5 +560,3 @@ impl<'t> KongApiClient<'t> {
         }
     }
 }
-
-
