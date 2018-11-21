@@ -8,7 +8,7 @@ pub type ConsumerInfo = BTreeMap<String, String>;
 #[derive(Debug, Deserialize, PartialEq)]
 pub struct LegacyKongConf {
     pub apis: Vec<ApiInfo>,
-    pub plugins: Vec<LegacyPluginInfo>,
+    pub plugins: Option<Vec<LegacyPluginInfo>>,
     pub consumers: Option<Vec<BTreeMap<String, String>>>,
     pub credentials: Option<Vec<CredentialsInfo>>,
 }
@@ -17,7 +17,7 @@ pub struct LegacyKongConf {
 pub struct KongConf {
     pub services: Vec<ServiceInfo>,
     pub routes: Vec<RouteInfo>,
-    pub plugins: Vec<PluginInfo>,
+    pub plugins: Option<Vec<PluginInfo>>,
     pub consumers: Option<Vec<BTreeMap<String, String>>>,
     pub credentials: Option<Vec<CredentialsInfo>>,
 }

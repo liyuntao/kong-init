@@ -158,7 +158,11 @@ fn runc(
             }
 
             init_apis(&mut context, &legacy_conf.apis);
-            apply_plugins_to_api(&context, &legacy_conf.plugins);
+
+
+            if let Some(plugins) = &legacy_conf.plugins {
+                apply_plugins_to_api(&context, plugins);
+            }
         }
         ConfFileStyle::Suggested(suggested_conf) => {
             clear_before_init(&context);
@@ -173,7 +177,10 @@ fn runc(
 
             init_services(&mut context, &suggested_conf.services);
             init_routes(&mut context, suggested_conf.routes);
-            apply_plugins_to_service_route(&context, &suggested_conf.plugins)
+
+            if let Some(plugins) = &suggested_conf.plugins {
+                apply_plugins_to_service_route(&context, plugins);
+            }
         }
         ConfFileStyle::IllegalFormat { msg } => {
             error!("invalid format: {}", msg);
