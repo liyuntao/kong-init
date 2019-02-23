@@ -3,6 +3,7 @@ name = "kong-init"
 version = "0.8.0-rc-6"
 keywords = ["kong", "api-gateway", "client"]
 authors = ["liyuntao <liyuntao58607@163.com>"]
+edition = "2018"
 
 [dependencies]
 clap = "2.32.0"

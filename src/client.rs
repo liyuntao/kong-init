@@ -1,4 +1,4 @@
-use entity::{
+use crate::entity::{
     AddRouteResp, AddServiceResp, ApiInfo, ConsumerDO, KongInfo, LegacyPluginAppliedType,
     ListApiResp, PluginInfo, PluginList, PluginTarget, RouteInfo, RouteList, ServiceInfo,
     ServiceList,

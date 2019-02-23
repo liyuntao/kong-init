@@ -16,8 +16,8 @@ extern crate serde_json;
 extern crate serde_yaml;
 
 use clap::{App, Arg};
-use client::KongApiClient;
-use entity::{
+use crate::client::KongApiClient;
+use crate::entity::{
     ApiInfo, ConfFileStyle, ConsumerInfo, CredentialsInfo, KongConf, LegacyKongConf,
     LegacyPluginAppliedType, LegacyPluginInfo, PluginInfo, PluginTarget, RouteInfo, ServiceInfo,
 };
