@@ -31,6 +31,7 @@ use std::io::prelude::*;
 use std::iter::FromIterator;
 use std::thread::sleep;
 use std::time::Duration;
+use serde_json::Value;
 
 mod client;
 mod entity;
@@ -407,11 +408,19 @@ fn clear_before_init(context: &ExecutionContext) {
 
 fn init_services(context: &mut ExecutionContext, services: &[ServiceInfo]) {
     for service_info in services {
-        let sid = context.kong_cli.add_service(&service_info).unwrap();
-        let service_name = service_info.get("name").unwrap();
-        context
-            .service_name_id_mapping
-            .insert(service_name.to_string(), sid);
+        let serde_value_field = service_info.get("name").unwrap();
+        match serde_value_field {
+            Value::String(service_name) => {
+                let sid = context.kong_cli.add_service(&service_info).unwrap();
+                context
+                    .service_name_id_mapping
+                    .insert(service_name.to_string(), sid);
+            }
+            _ => {
+                error!("failed adding service name={:?}, the `name` field must be String type", serde_value_field);
+                std::process::exit(1);
+            }
+        }
     }
     info!("finished loading services...");
     info!("=================================");

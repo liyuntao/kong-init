@@ -2,7 +2,7 @@ use std::collections::BTreeMap;
 
 use serde_json::Value;
 pub type ApiInfo = BTreeMap<String, String>;
-pub type ServiceInfo = BTreeMap<String, String>;
+pub type ServiceInfo = BTreeMap<String, Value>;
 pub type ConsumerInfo = BTreeMap<String, String>;
 
 #[derive(Debug, Deserialize, PartialEq)]
