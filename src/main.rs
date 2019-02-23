@@ -447,7 +447,7 @@ fn apply_plugins_to_service_route(context: &ExecutionContext, plugins: &[PluginI
     for plugin_info in plugins {
         debug!("pluinInfo {:?}", plugin_info);
 
-        let mut target = &plugin_info.target.clone();
+        let target = &plugin_info.target.clone();
 
         let plugin_target = if target == "global" {
             PluginTarget::GLOBAL
