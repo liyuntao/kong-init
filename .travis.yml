@@ -33,6 +33,7 @@ install:
 
 script:
   - echo $TRAVIS_OS_NAME
+  - rustc -V
   - bash ci/script.sh
 
 after_script: set +e
